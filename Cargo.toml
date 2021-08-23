@@ -1,0 +1,23 @@
+[package]
+name = "cnfpack"
+version = "0.1.0"
+edition = "2018"
+description = "Converts between the text based DIMACS CNF file format and the compressed binary Cnfpack format"
+repository = "https://github.com/jix/cnfpack"
+license = "0BSD"
+readme = "README.md"
+keywords = ["cnfpack", "compression", "SAT", "DIMACS", "CNF"]
+categories = ["command-line-utilities", "compression"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+atty = "0.2.14"
+flussab-cnf = "0.2.0"
+itoap = "1.0.1"
+num_cpus = "1.13.0"
+structopt = "0.3.22"
+zstd = "0.9.0"
+
+[profile.release]
+debug = true # Enables profiling
