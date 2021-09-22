@@ -577,7 +577,13 @@ fn decode_u32(read: &mut impl Read) -> io::Result<u32> {
 }
 
 fn decode_ints(read: &mut impl Read, len: usize, max_value: u32) -> io::Result<Vec<u32>> {
-    let mut values = vec![0u32; len];
+    let mut values = vec![0; len];
+    decode_ints_into(read, &mut values, max_value)?;
+    Ok(values)
+}
+
+fn decode_ints_into(read: &mut impl Read, values: &mut [u32], max_value: u32) -> io::Result<()> {
+    let len = values.len();
     if max_value < (1 << 8) {
         unsafe {
             read.read_exact(std::slice::from_raw_parts_mut(
@@ -641,11 +647,11 @@ fn decode_ints(read: &mut impl Read, len: usize, max_value: u32) -> io::Result<V
             ))?;
         }
 
-        for value in &mut values {
+        for value in values {
             *value = value.to_le();
         }
     }
-    Ok(values)
+    Ok(())
 }
 
 fn decode(mut input: Box<dyn Read>, mut output: Box<dyn Write>) -> Result<()> {
@@ -715,9 +721,16 @@ fn decode(mut input: Box<dyn Read>, mut output: Box<dyn Write>) -> Result<()> {
 
     let mask = u32::MAX >> shift;
 
-    let mut deltas = decode_ints(&mut input, lit_count, max_lit_code)?;
+    const CHUNK_SIZE: usize = 1 << 16;
+
+    let delta_buf_size = lit_count.min(CHUNK_SIZE + 256);
+
+    let mut deltas = vec![0; delta_buf_size];
+
+    decode_ints_into(&mut input, &mut deltas, max_lit_code)?;
 
     let mut lit_pos = 0;
+    let mut buf_shift = 0;
 
     let mut long_clause_len = long_clause_len.into_iter();
 
@@ -737,9 +750,18 @@ fn decode(mut input: Box<dyn Read>, mut output: Box<dyn Write>) -> Result<()> {
         };
 
         for _ in 0..len {
+            if lit_pos == deltas.len() {
+                deltas.copy_within(CHUNK_SIZE.., 0);
+                buf_shift += CHUNK_SIZE;
+                lit_pos -= CHUNK_SIZE;
+
+                let read_size = (lit_count - buf_shift - 256).min(CHUNK_SIZE);
+
+                decode_ints_into(&mut input, &mut deltas[256..][..read_size], max_lit_code)?;
+            }
             let code;
             if mode == 1 {
-                let offset = offsets[lit_pos] as usize;
+                let offset = offsets[lit_pos + buf_shift] as usize;
                 let delta = deltas[lit_pos];
 
                 let base = if lit_pos < offset + 1 {
