@@ -1,7 +1,7 @@
 [package]
 name = "cnfpack"
-version = "0.1.0"
-edition = "2018"
+version = "0.1.1"
+edition = "2021"
 description = "Converts between the text based DIMACS CNF file format and the compressed binary Cnfpack format"
 repository = "https://github.com/jix/cnfpack"
 license = "0BSD"
@@ -13,11 +13,11 @@ categories = ["command-line-utilities", "compression"]
 
 [dependencies]
 atty = "0.2.14"
-flussab-cnf = "0.2.0"
+flussab-cnf = "0.3.0"
 itoap = "1.0.1"
-num_cpus = "1.13.0"
-structopt = "0.3.22"
-zstd = "0.9.0"
+num_cpus = "1.13.1"
+structopt = "0.3.26"
+zstd = "0.10.0"
 
 [profile.release]
 debug = true # Enables profiling

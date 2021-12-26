@@ -200,7 +200,7 @@ pub struct ParsedCnf {
 
 impl ParsedCnf {
     pub fn new(input: Box<dyn Read>) -> Result<Self> {
-        let mut parser = cnf::Parser::<i32>::from_boxed_dyn_read(input, true)?;
+        let mut parser = cnf::Parser::<i32>::from_boxed_dyn_read(input, cnf::Config::default())?;
         let mut clause_len: Vec<u8> = vec![];
         let mut long_clause_len: Vec<u32> = vec![];
         let mut lits: Vec<u32> = vec![];
@@ -250,13 +250,7 @@ fn normalize(input: Box<dyn Read>, mut output: Box<dyn Write>) -> Result<()> {
     let mut lit_pos = 0;
     let mut output_buf = vec![];
 
-    cnf::write_header(
-        &mut output_buf,
-        cnf::Header {
-            var_count: var_count as usize,
-            clause_count: clause_len.len(),
-        },
-    )?;
+    writeln!(&mut output_buf, "p cnf {} {}", var_count, clause_len.len())?;
 
     for short_len in clause_len {
         let len = if short_len == 255 {
@@ -734,13 +728,7 @@ fn decode(mut input: Box<dyn Read>, mut output: Box<dyn Write>) -> Result<()> {
 
     let mut long_clause_len = long_clause_len.into_iter();
 
-    cnf::write_header(
-        &mut output_buf,
-        cnf::Header {
-            var_count: var_count as usize,
-            clause_count,
-        },
-    )?;
+    writeln!(&mut output_buf, "p cnf {} {}", var_count, clause_count)?;
 
     for short_len in clause_len {
         let len = if short_len == 255 {
